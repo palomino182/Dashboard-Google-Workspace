@@ -1,6 +1,6 @@
 // Regenera docs/index.html (diseño, datos o código nuevos) SIN cambiar el usuario ni la clave.
 //
-// Uso:   node scripts/actualizar.js
+// Uso:   node scripts/actualizar.js  [--tema=consola|moderno]
 // Pide el usuario y la clave actuales y los comprueba contra docs/index.html. Si no coinciden,
 // no genera nada. Si coinciden, vuelve a cifrar con la misma clave.
 // Para CAMBIAR la clave usa scripts/publicar.js.
@@ -9,6 +9,21 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const readline = require('readline');
+
+// Tema visual: --tema=consola | --tema=moderno (por defecto, el de scripts/temas/actual.txt)
+function leerTema() {
+  const arg = process.argv.find((a) => a.startsWith('--tema='));
+  const dir = path.join(__dirname, 'temas');
+  const nombre = (arg ? arg.slice(7) : fs.readFileSync(path.join(dir, 'actual.txt'), 'utf8')).trim();
+  const f = path.join(dir, nombre + '.html');
+  if (!/^[a-z0-9-]+$/i.test(nombre) || !fs.existsSync(f)) {
+    const hay = fs.readdirSync(dir).filter((x) => x.endsWith('.html')).map((x) => x.slice(0, -5)).join(', ');
+    console.error('Tema desconocido: ' + nombre + '. Disponibles: ' + hay);
+    process.exit(1);
+  }
+  if (arg) fs.writeFileSync(path.join(dir, 'actual.txt'), nombre + '\n');
+  return {nombre, css: fs.readFileSync(f, 'utf8')};
+}
 
 const RAIZ = path.join(__dirname, '..');
 const DOCS = path.join(RAIZ, 'docs', 'index.html');
@@ -75,7 +90,9 @@ async function main() {
   const ct = Buffer.concat([cipher.update(plano), cipher.final(), cipher.getAuthTag()]);
   const payload = JSON.stringify({v: 1, iter: actual.iter, salt: actual.salt, iv: iv.toString('base64'), ct: ct.toString('base64')});
 
-  fs.writeFileSync(DOCS, plantilla.replace('/*__PAYLOAD__*/', () => payload));
+  const tema = leerTema();
+  fs.writeFileSync(DOCS, plantilla.replace('<!--__TEMA__-->', () => tema.css).replace('/*__PAYLOAD__*/', () => payload));
+  console.log('Tema: ' + tema.nombre);
   console.log(`Listo: docs/index.html actualizado con la misma clave (${rows.length} cuentas).`);
   console.log('Ahora: git add docs scripts  ->  git commit -m "Actualiza dashboard"  ->  git push');
 }

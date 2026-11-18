@@ -1,6 +1,6 @@
 // Genera docs/ para GitHub Pages: una página con login cuyo contenido (dashboard, datos y código) va cifrado.
 //
-// Uso:   node scripts/publicar.js
+// Uso:   node scripts/publicar.js  [--tema=consola|moderno]
 // Pide el usuario y la clave en la terminal. Para cambiar la clave o publicar datos nuevos, vuelve a ejecutarlo
 // (primero regenera los datos con: node scripts/analizar.js data/<exportación>.json).
 //
@@ -11,6 +11,21 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const readline = require('readline');
+
+// Tema visual: --tema=consola | --tema=moderno (por defecto, el de scripts/temas/actual.txt)
+function leerTema() {
+  const arg = process.argv.find((a) => a.startsWith('--tema='));
+  const dir = path.join(__dirname, 'temas');
+  const nombre = (arg ? arg.slice(7) : fs.readFileSync(path.join(dir, 'actual.txt'), 'utf8')).trim();
+  const f = path.join(dir, nombre + '.html');
+  if (!/^[a-z0-9-]+$/i.test(nombre) || !fs.existsSync(f)) {
+    const hay = fs.readdirSync(dir).filter((x) => x.endsWith('.html')).map((x) => x.slice(0, -5)).join(', ');
+    console.error('Tema desconocido: ' + nombre + '. Disponibles: ' + hay);
+    process.exit(1);
+  }
+  if (arg) fs.writeFileSync(path.join(dir, 'actual.txt'), nombre + '\n');
+  return {nombre, css: fs.readFileSync(f, 'utf8')};
+}
 
 const RAIZ = path.join(__dirname, '..');
 const ITER = 600000;
@@ -63,7 +78,9 @@ async function main() {
 
   const docs = path.join(RAIZ, 'docs');
   fs.mkdirSync(docs, {recursive: true});
-  fs.writeFileSync(path.join(docs, 'index.html'), plantilla.replace('/*__PAYLOAD__*/', () => payload));
+  const tema = leerTema();
+  fs.writeFileSync(path.join(docs, 'index.html'), plantilla.replace('<!--__TEMA__-->', () => tema.css).replace('/*__PAYLOAD__*/', () => payload));
+  console.log('Tema: ' + tema.nombre);
   fs.writeFileSync(path.join(docs, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
   fs.writeFileSync(path.join(docs, '.nojekyll'), '');
 
