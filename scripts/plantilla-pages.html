@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Licencias Google Workspace</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+  /* Tokens equivalentes a los del dashboard original; claro y oscuro */
+  :root {
+    --color-bg: #f7f7f8; --color-panel: #ffffff; --color-fg: #1c1c21; --color-fg-muted: #62626b;
+    --color-border-line: #dedee3; --cds-text-secondary: #62626b;
+    --c1: #2f6fdb; --c2: #e0902f; --cds-chart-muted: #c3c3cb;
+    --cds-surface-popover: #ffffff; --cds-border: #d6d6dc; --cds-shadow-popover: 0 6px 24px rgba(20, 20, 30, .14);
+    --color-bad: #c43c3c;
+    --font-anthropic-sans: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    --font-anthropic-serif: Georgia, "Times New Roman", serif;
+    --cds-font-size-caption: 12px; --cds-font-size-body: 14px; --cds-font-size-heading: 17px; --cds-font-size-title: 30px;
+    --cds-font-weight-medium: 600;
+    --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 20px; --cds-gap-xl: 32px;
+    --cds-pad-sm: 6px; --cds-pad-md: 10px; --cds-pad-lg: 16px; --cds-radius: 8px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #151518; --color-panel: #1e1e23; --color-fg: #ececf0; --color-fg-muted: #a0a0aa;
+      --color-border-line: #33333b; --cds-text-secondary: #a0a0aa;
+      --c1: #6b9cf0; --c2: #f0a850; --cds-chart-muted: #4a4a54;
+      --cds-surface-popover: #26262c; --cds-border: #3a3a43; --cds-shadow-popover: 0 6px 24px rgba(0, 0, 0, .5);
+      --color-bad: #f07a7a;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--color-bg); color: var(--color-fg); font: 14px/1.5 var(--font-anthropic-sans); }
+  [hidden] { display: none !important; }
+
+  .pg-login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+  .pg-card { width: min(100%, 360px); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 12px; padding: 28px 24px; display: grid; gap: 14px; }
+  .pg-card h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 24px; margin: 0; }
+  .pg-card p { margin: 0; color: var(--color-fg-muted); font-size: 13px; }
+  .pg-field { display: grid; gap: 4px; font-size: 13px; }
+  .pg-field input { font: inherit; font-size: 15px; padding: 9px 11px; border: 1px solid var(--color-border-line); border-radius: 8px; background: var(--color-bg); color: var(--color-fg); }
+  .pg-field input:focus-visible, .pg-btn:focus-visible { outline: 2px solid var(--c1); outline-offset: 1px; }
+  .pg-btn { font: inherit; font-weight: 600; padding: 10px; border-radius: 8px; border: 0; background: var(--color-fg); color: var(--color-bg); cursor: pointer; }
+  .pg-btn:disabled { opacity: .6; cursor: progress; }
+  .pg-err { color: var(--color-bad) !important; min-height: 1.3em; }
+
+  .pg-bar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; font-size: 12px; color: var(--color-fg-muted); padding: 10px 16px 0; max-width: 1240px; margin: 0 auto; }
+  .pg-bar button { font: inherit; background: none; border: 1px solid var(--color-border-line); color: var(--color-fg); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+  #dash-root { max-width: 1240px; margin: 0 auto; padding: 12px 16px 48px; }
+
+  /* Equivalentes de las clases del tipo Dashboard */
+  .dash-select { font: inherit; font-size: 13px; color: var(--color-fg); background-color: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 8px; padding: 6px 10px; }
+  .dash-skeleton { color: transparent !important; background: var(--color-border-line); border-radius: 4px; min-width: 2ch; display: inline-block; }
+</style>
+</head>
+<body>
+  <main class="pg-login" id="login">
+    <form class="pg-card" id="form" autocomplete="on">
+      <h1>Licencias Google Workspace</h1>
+      <p>Acceso restringido al equipo. Ingresa el usuario y la clave que te compartieron.</p>
+      <label class="pg-field">Usuario<input id="usuario" name="username" autocomplete="username" required></label>
+      <label class="pg-field">Clave<input id="clave" name="password" type="password" autocomplete="current-password" required></label>
+      <button class="pg-btn" id="entrar" type="submit">Entrar</button>
+      <p class="pg-err" id="err" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <div id="app" hidden>
+    <div class="pg-bar"><span id="quien"></span><button type="button" id="salir">Cerrar sesión</button></div>
+    <div id="dash-root"></div>
+  </div>
+
+<script id="payload" type="application/json">/*__PAYLOAD__*/</script>
+<script>
+(function () {
+  const P = JSON.parse(document.getElementById('payload').textContent);
+  const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+  async function descifrar(usuario, clave) {
+    const material = new TextEncoder().encode(usuario.trim().toLowerCase() + '\n' + clave);
+    const base = await crypto.subtle.importKey('raw', material, 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({name: 'PBKDF2', salt: b64(P.salt), iterations: P.iter, hash: 'SHA-256'}, base, {name: 'AES-GCM', length: 256}, false, ['decrypt']);
+    const plano = await crypto.subtle.decrypt({name: 'AES-GCM', iv: b64(P.iv)}, key, b64(P.ct));
+    return JSON.parse(new TextDecoder().decode(plano));
+  }
+
+  // Reemplazo mínimo de la API del tipo Dashboard (dash.*) para que la página corra fuera de Claude
+  function montarDash(rows) {
+    const calcs = {}, draws = {}, cache = {};
+    const correr = (name) => {
+      const fn = draws[name]; if (!fn) return;
+      document.querySelectorAll('[data-draw="' + name + '"]').forEach((el) => {
+        try { fn(el); } catch (e) { console.error('draw ' + name, e); }
+      });
+    };
+    window.dash = {
+      colors: ['var(--c1)', 'var(--c2)', 'var(--cds-chart-muted)'],
+      calc(id, def) { calcs[id] = def; },
+      loader() {},
+      data(id) {
+        if (id === 'cuentas') return {status: 'ok', data: rows};
+        const c = calcs[id];
+        if (!c) return {status: 'missing', data: []};
+        if (!(id in cache)) cache[id] = c.fn(...c.inputs.map((i) => window.dash.data(i).data));
+        return {status: 'ok', data: cache[id]};
+      },
+      draw(name, fn) {
+        if (typeof fn === 'function') draws[name] = fn;
+        else if (fn && fn.update) draws[name] = (el) => fn.update(el, el.__m || (el.__m = fn.mount ? fn.mount(el) : null));
+        if (!fn || window.dash.__listo) correr(name);
+      },
+      onData(fn) { try { fn(); } catch (e) { console.error(e); } },
+      params() { return {}; }, setParams() {}, resetParams() {}, setLink() {}, refresh() {},
+      __correrTodo() { Object.keys(draws).forEach(correr); }
+    };
+    window.claude = {
+      use: async (n) => n !== 'downloads' ? null : {
+        save: async ({filename, data}) => {
+          const url = URL.createObjectURL(new Blob([data], {type: filename.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream'}));
+          const a = document.createElement('a'); a.href = url; a.download = filename;
+          document.body.append(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+          return {status: 'saved'};
+        }
+      }
+    };
+  }
+
+  function ejecutar(codigo) { const s = document.createElement('script'); s.textContent = codigo; document.body.append(s); }
+
+  function montarApp(datos, usuario) {
+    montarDash(datos.rows);
+    const tpl = document.createElement('template');
+    tpl.innerHTML = datos.html;
+    const scripts = [...tpl.content.querySelectorAll('script')];
+    scripts.forEach((s) => s.remove());
+    document.getElementById('dash-root').replaceChildren(tpl.content);
+    document.getElementById('login').hidden = true;
+    document.getElementById('app').hidden = false;
+    document.getElementById('quien').textContent = 'Sesión: ' + usuario;
+    for (const s of scripts) {
+      if (s.getAttribute('src') === 'pdf.js') ejecutar(datos.pdf);
+      else if (!s.getAttribute('src')) ejecutar(s.textContent);
+    }
+    window.dash.__listo = true;
+    window.dash.__correrTodo();
+    let t; let ancho = window.innerWidth;
+    window.addEventListener('resize', () => {
+      if (window.innerWidth === ancho) return; ancho = window.innerWidth;
+      clearTimeout(t); t = setTimeout(() => window.dash.__correrTodo(), 150);
+    });
+  }
+
+  document.getElementById('form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const btn = document.getElementById('entrar'), err = document.getElementById('err');
+    const usuario = document.getElementById('usuario').value, clave = document.getElementById('clave').value;
+    btn.disabled = true; btn.textContent = 'Verificando…'; err.textContent = '';
+    try {
+      const datos = await descifrar(usuario, clave);
+      document.getElementById('clave').value = '';
+      montarApp(datos, usuario.trim());
+    } catch (e) {
+      err.textContent = 'Usuario o clave incorrectos.';
+      btn.disabled = false; btn.textContent = 'Entrar';
+    }
+  });
+  document.getElementById('salir').addEventListener('click', () => location.reload());
+})();
+</script>
+</body>
+</html>

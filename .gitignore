@@ -1,0 +1,9 @@
+# Solo docs/ (cifrado) y scripts/ deben subirse a GitHub.
+
+# Datos sin cifrar: NUNCA subir al repositorio
+data/
+resultados/
+
+# Fuente del dashboard: contiene textos internos (dominios, cuentas de ejemplo) sin cifrar.
+# Ya va cifrado dentro de docs/index.html.
+dashboard/
